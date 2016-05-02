@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # import cPickle as pickle
 import pickle
 import argparse as ap
@@ -56,13 +58,16 @@ def get_lines(img, num_thresh=500, val_thresh=0.6):
     return labels
 
 
-def make_fit(orig, masked, idx):
+def make_fit(orig, masked, idx, center=None):
     mask = (masked == idx)  # .astype(int)
     grown = mask.copy()
     for ii in range(4):
         grown = ndim.morphology.binary_dilation(grown)
 
     y, x = np.where(grown)
+    if center is not None:
+        x -= center[1]
+        y -= center[0]
     fit = np.polyfit(x, y, 2, w=orig[grown] ** 2)
     return fit
 
@@ -83,10 +88,10 @@ def preclean_data(xs, ys):
     return xs[is_ok], ys[is_ok]
 
 
-def robust_fit(xs, ys, fsc=1e-6):
+def robust_fit(xs, ys):
     xs, ys = preclean_data(xs, ys)
-    res_robust = opt.least_squares(residue_x, np.zeros(2), method="dogbox", x_scale=1e-9,
-                                   loss='arctan', f_scale=fsc, args=(xs, ys), verbose=0, ftol=1e-12)
+    res_robust = opt.least_squares(residue_x, np.zeros(2), method="dogbox",
+                                   loss='arctan', args=(xs, ys), verbose=0)
     return res_robust
 
 
@@ -105,34 +110,37 @@ def get_img(fname):
     return img
 
 
-def get_result(img):
+def get_result(img, center=None):
     ordered_labels = get_lines(img)
 
-    rotim = img
-
-    lines = [make_fit(rotim, ordered_labels, label)
+    lines = [make_fit(img, ordered_labels, label, center)
              for label in range(1, int(ordered_labels.max()))]
 
     quads, lins, dsts = [np.array(x) for x in zip(* lines)]
     fit = robust_fit(dsts, quads)["x"]
-
-    lines_out = (quads, lins, dsts)
     key_dep = fit
 
+    fit = robust_fit(dsts, lins)["x"]
+    key_lin = fit
+
+    lines_out = (quads, lins, dsts)
+
     output = dict(
+        image=img,
         fits=np.array(lines),
-        slope=np.median(lins),
         lines_out=lines_out,
         key_dep=key_dep,
+        key_lin=key_lin,
     )
     return output
 
 
-def plot_result(rotim, output):
+def plot_result(output):
     quads, lins, dsts = output["lines_out"]
     fit = output["key_dep"]
+    img = output["image"]
 
-    xp = np.linspace(0, rotim.shape[1], 200)
+    xp = np.linspace(0, img.shape[1], 200)
 
     fig, pl = plt.subplots()
     x, y = preclean_data(dsts, quads)
@@ -140,18 +148,28 @@ def plot_result(rotim, output):
     # pl.plot(dsts, lins, "o")
 
     pl.plot(x, np.poly1d(fit)(x))
-
+    pl.set_title("Quadratic term")
     pl.grid()
 
-    ordered_labels = get_lines(rotim)
+    fit = output["key_lin"]
+    fig, pl = plt.subplots()
+    x, y = preclean_data(dsts, lins)
+    pl.plot(x, y, "o")
+    # pl.plot(dsts, lins, "o")
+
+    pl.plot(x, np.poly1d(fit)(x))
+    pl.set_title("Linear term")
+    pl.grid()
+
+    ordered_labels = get_lines(img)
     polys = []
-    for idx in range(23, 28):
-        fit = make_fit(rotim, ordered_labels, idx)
+    for idx in range(10, 30, 4):
+        fit = make_fit(img, ordered_labels, idx)
         poly = np.poly1d(fit)
-        polys.append((poly, fit[0]))
+        polys.append((poly, fit[-3]))
 
     fig, pl = plt.subplots()
-    pl.imshow(rotim, cmap=plt.cm.gray)
+    pl.imshow(img, cmap=plt.cm.gray)
     for poly, label in polys:
         pl.plot(xp, poly(xp), label="a = %.02g" % (label * 1e6))
     pl.legend()
@@ -167,7 +185,7 @@ def do():
         with open(args.output, "wb") as outfile:
             pickle.dump(output, outfile)
     if args.plot:
-        plot_result(img, output)
+        plot_result(output)
 
 
 if __name__ == "__main__":
