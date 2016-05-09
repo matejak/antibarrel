@@ -9,6 +9,8 @@ import scipy as sp
 import scipy.ndimage as ndim
 import scipy.optimize as opt
 import matplotlib.pyplot as plt
+
+import statsmodels.formula.api as sfapi
 # import skimage as si
 # import skimage.measure
 
@@ -88,10 +90,44 @@ def preclean_data(xs, ys):
     return xs[is_ok], ys[is_ok]
 
 
-def robust_fit(xs, ys):
-    xs, ys = preclean_data(xs, ys)
+def robust_fit2(xs, ys):
+    # xs, ys = preclean_data(xs, ys)
     res_robust = opt.least_squares(residue_x, np.zeros(2), method="dogbox",
                                    loss='arctan', args=(xs, ys), verbose=0)
+    return res_robust["x"]
+
+
+def robust_fit(xs, ys):
+    norig = len(xs)
+    xs, ys = preclean_data(xs, ys)
+    for _ in range(3):
+        regression = sfapi.ols("data ~ x", data=dict(data=ys, x=xs)).fit()
+
+        test = regression.outlier_test()
+        # The greater t is, the more outliers there will be
+        # print(test.iloc[:, 2])
+        selection = [i for i, t in enumerate(test.iloc[:, 1]) if t > 0.15]
+        selection = np.array(selection, int)
+
+        xs = xs[selection]
+        ys = ys[selection]
+    params = regression.params
+    res_robust = np.array((params["x"], params["Intercept"]), float)
+
+    noutliers = norig - len(xs)
+    print("Removed total {} outliers".format(noutliers))
+
+    """
+    import statsmodels.api
+    import statsmodels.graphics as smgraphics
+
+    figure = smgraphics.regressionplots.plot_fit(regression, 1)
+    smgraphics.regressionplots.abline_plot(
+        model_results=regression, ax=figure.axes[0])
+    """
+
+    res_robust = robust_fit2(xs, ys)
+
     return res_robust
 
 
@@ -117,10 +153,10 @@ def get_result(img, center=None):
              for label in range(1, int(ordered_labels.max()))]
 
     quads, lins, dsts = [np.array(x) for x in zip(* lines)]
-    fit = robust_fit(dsts, quads)["x"]
+    fit = robust_fit(dsts, quads)
     key_dep = fit
 
-    fit = robust_fit(dsts, lins)["x"]
+    fit = robust_fit(dsts, lins)
     key_lin = fit
 
     lines_out = (quads, lins, dsts)
@@ -135,45 +171,50 @@ def get_result(img, center=None):
     return output
 
 
-def plot_result(output):
-    quads, lins, dsts = output["lines_out"]
-    fit = output["key_dep"]
-    img = output["image"]
+def plot_result(* outputs):
+    _, pl_quad = plt.subplots()
+    _, pl_lin = plt.subplots()
+    for idx, output in enumerate(outputs):
+        quads, lins, dsts = output["lines_out"]
+        fit = output["key_dep"]
+        img = output["image"]
 
-    xp = np.linspace(0, img.shape[1], 200)
+        xp = np.linspace(0, img.shape[1], 200)
 
-    fig, pl = plt.subplots()
-    x, y = preclean_data(dsts, quads)
-    pl.plot(x, y, "o")
-    # pl.plot(dsts, lins, "o")
+        x, y = preclean_data(dsts, quads)
+        pl_quad.plot(x, y, "o")
+        # pl.plot(dsts, lins, "o")
 
-    pl.plot(x, np.poly1d(fit)(x))
-    pl.set_title("Quadratic term")
-    pl.grid()
+        pl_quad.plot(x, np.poly1d(fit)(x),
+                     label="{} = {:.3g}".format(idx, fit[-2]))
+        pl_quad.set_title("Quadratic term")
 
-    fit = output["key_lin"]
-    fig, pl = plt.subplots()
-    x, y = preclean_data(dsts, lins)
-    pl.plot(x, y, "o")
-    # pl.plot(dsts, lins, "o")
+        fit = output["key_lin"]
+        x, y = preclean_data(dsts, lins)
+        pl_lin.plot(x, y, "o")
+        # pl.plot(dsts, lins, "o")
 
-    pl.plot(x, np.poly1d(fit)(x))
-    pl.set_title("Linear term")
-    pl.grid()
+        pl_lin.plot(x, np.poly1d(fit)(x),
+                    label="{} = {:.3g}".format(idx, fit[-2]))
+        pl_lin.set_title("Linear term")
 
-    ordered_labels = get_lines(img)
-    polys = []
-    for idx in range(10, 30, 4):
-        fit = make_fit(img, ordered_labels, idx)
-        poly = np.poly1d(fit)
-        polys.append((poly, fit[-3]))
+        ordered_labels = get_lines(img)
+        polys = []
+        for idx in range(10, 30, 4):
+            fit = make_fit(img, ordered_labels, idx)
+            poly = np.poly1d(fit)
+            polys.append((poly, fit[-3]))
 
-    fig, pl = plt.subplots()
-    pl.imshow(img, cmap=plt.cm.gray)
-    for poly, label in polys:
-        pl.plot(xp, poly(xp), label="a = %.02g" % (label * 1e6))
-    pl.legend()
+        fig, pl = plt.subplots()
+        pl.imshow(img, cmap=plt.cm.gray)
+        for poly, label in polys:
+            pl.plot(xp, poly(xp), label="a = %.02g" % (label * 1e6))
+        pl.legend()
 
+    pl_quad.grid()
+    pl_quad.legend()
+    pl_lin.grid()
+    pl_lin.legend()
     plt.show()
 
 

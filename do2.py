@@ -27,12 +27,18 @@ def main():
     outputs = [do.get_result(img, indata["center"])
                for img in imgs]
 
+    deps = [np.array(outp["key_dep"])
+            for outp in outputs]
+    fusion = dict(
+        center=indata["center"],
+        key_deps=np.array(deps),
+    )
+
     if args.output is not None:
         with open(args.output, "wb") as outfile:
-            pickle.dump(outputs, outfile)
+            pickle.dump(fusion, outfile)
     if args.plot:
-        do.plot_result(outputs[0])
-        do.plot_result(outputs[1])
+        do.plot_result(outputs[0], outputs[1])
 
 
 if __name__ == "__main__":
