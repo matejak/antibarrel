@@ -69,7 +69,6 @@ def compute(one, two):
               for data, zero in zip((one, two), zeros_at)]
     # assuming y = b * x + c,
     # Essentially Dc / Db
-    print(zeros_at)
     x = (zeros_at[1] - zeros_at[0]) / (slopes[0] - slopes[1])
     y = x * slopes[0] + zeros_at[0]
     center = np.array((y, x))
