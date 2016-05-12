@@ -72,10 +72,10 @@ def formulate(fit_quad, center):
     """
     ylim, xlim = center
     polys = [(np.polyval(fit_quad, const), 0, const)
-             for const in np.linspace(ylim * 1e-2,  ylim, 10)]
+             for const in np.linspace(ylim * 1e-2,  ylim, 13)]
     # a, b, c, d + n-times y0
     n_unks = 4 + len(polys)
-    PTS_IN_POLY = 10
+    PTS_IN_POLY = 15
     result = np.zeros(n_unks, float)
     result[3] = 1
     # defaults are a, b, c, d
@@ -128,6 +128,27 @@ def plot_pts(ys, * pts):
     plt.show()
 
 
+def print_diffs(ys, bad, good):
+    pnum = len(bad)
+    pts_in_row = pnum // len(ys)
+    diffs = np.zeros(pnum * 2)
+    bad_sum = 0
+    for idx, pt in enumerate(bad):
+        diffs[idx] = pt[0] - ys[idx / pts_in_row]
+        bad_sum += (diffs[idx]) ** 2
+    print("Bad sum: ", bad_sum)
+    good_sum = 0
+    for idx, pt in enumerate(good):
+        diffs[idx + pnum] = pt[0] - ys[idx / pts_in_row]
+        good_sum += (diffs[idx]) ** 2
+    print("Good sum: ", good_sum)
+    _, pl = plt.subplots()
+    pl.hist(np.abs(diffs[:pnum]), bins=15)
+    pl.hist(-np.abs(diffs[pnum:]), bins=15)
+    pl.grid()
+    plt.show()
+
+
 def tform_pts(tform, pts):
     res = []
     for pt in pts:
@@ -150,12 +171,14 @@ def main():
 
     center = indata["center"]
     quads = indata["key_deps"].mean(axis=0)
+    print(quads, indata["key_deps"])
     estim, data, points = formulate(quads, center)
     result = solve(estim, data)
     print("Center:", center)
     # print(points)
     shifted = tform_pts(result[:4], points)
     plot_pts(result[4:], points, shifted)
+    print_diffs(result[4:], points, shifted)
 
 
 if __name__ == "__main__":
