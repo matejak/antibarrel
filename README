@@ -1,0 +1,10 @@
+What to do next
+===============
+
+* Add support for more images (make the center determination more precise).
+
+* Use a better method for problem solution (employ ``sympy`` and work with
+  Jacobian and Hessian).
+
+* Think of better distribution of points we use in the distortion calculation.
+

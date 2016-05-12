@@ -1,3 +1,5 @@
 .*~
 \.ropeproject.*
 __pycache__.*
+
+s-0.\.tiff

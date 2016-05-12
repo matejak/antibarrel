@@ -1,3 +1,4 @@
+import sys
 import pickle
 import argparse as ap
 
@@ -6,32 +7,33 @@ import scipy.optimize as opt
 import matplotlib.pyplot as plt
 
 
+NORM = None
+
+
 def cart2pol(pt):
     x = pt[1]
     y = pt[0]
-    rho = np.sqrt(x ** 2 + y ** 2)
+    rho = np.sqrt(x ** 2 + y ** 2) / NORM
     phi = np.arctan2(y, x)
     return(rho, phi)
 
 
 def pol2cart(rho, phi):
+    rho *= NORM
     x = rho * np.cos(phi)
     y = rho * np.sin(phi)
     return np.array((y, x), float)
 
 
-# matrix row: R, sf, idx
-def gradient(where, data):
-    ret = np.zeros_like(where)
-    for row in data:
-        yidx = int(row[2])
-        for idx in range(4):
-            ret[idx] += (where[4 + yidx] / row[1]) ** (4 - idx)
-        for idx in range(4):
-            ret[yidx + 4] = (where[idx] * (4 - idx) *
-                             # a * 4 *
-                             where[yidx + 4] ** (3 - idx) / row[1] ** (4 - idx))
-                             # * y^3 / sf^4 ... etc
+def _row2val2(vals, rho, ysf):
+    ys = np.ones(4) * rho
+    for idx in range(3):
+        ys[:(-idx - 1)] *= rho
+    # ^^^ should result in
+    # ^^^ y^4, y^3, y^2, y
+    ret = 0
+    ret -= ysf
+    ret += (vals * ys).sum()
     return ret
 
 
@@ -52,7 +54,7 @@ def _row2val(vals, rho, ysf):
 def _vals2val(vals, matrix, init_estim):
     fun = 0
     for row in matrix:
-        inc = _row2val(vals[:4], row[0], vals[4 + int(row[2])] / row[1])
+        inc = _row2val(vals[:4], row[0], vals[4 + int(row[2])] / row[1] / NORM)
         # fun += abs(inc)
         fun += inc ** 2
     # print(vals, abs(fun))
@@ -70,9 +72,10 @@ def formulate(fit_quad, center):
     .. note::
         Point is a coordinate pair (y, x)
     """
-    ylim, xlim = center
+    ylim = NORM
+    xlim = ylim
     polys = [(np.polyval(fit_quad, const), 0, const)
-             for const in np.linspace(ylim * 1e-2,  ylim, 13)]
+             for const in np.linspace(1e-1,  1, 13) ** 2 * ylim]
     # a, b, c, d + n-times y0
     n_unks = 4 + len(polys)
     PTS_IN_POLY = 15
@@ -88,7 +91,7 @@ def formulate(fit_quad, center):
     for polyidx, poly in enumerate(polys):
         result[4 + polyidx] = poly[-1]
         points = [(np.polyval(poly, dom), dom)
-                  for dom in np.linspace(ylim * 1e-2, xlim, PTS_IN_POLY)]
+                  for dom in np.linspace(1e-1, 1, PTS_IN_POLY) ** 2 * xlim]
         for pt in points:
             rho, phi = cart2pol(pt)
             sphi = np.sin(phi)
@@ -103,17 +106,21 @@ def formulate(fit_quad, center):
 
 
 def solve(estimate, data):
-    print("Initial: ", estimate, _vals2val(estimate, data, estimate))
+    print("Initial: ", _vals2val(estimate, data, estimate), file=sys.stderr)
     meth = "Powell"
     res = opt.minimize(_vals2val, estimate, args=(data, estimate),
                        method=meth).x
-    print("Final: ", res, _vals2val(res, data, estimate))
+    print("Final: ", res[:4], _vals2val(res, data, estimate), file=sys.stderr)
+    print("Line shift: ",
+          res[4:] - estimate[4:], _vals2val(res, data, estimate),
+          file=sys.stderr)
     return res
 
 
 def parse_args():
     parser = ap.ArgumentParser()
     parser.add_argument("input")
+    parser.add_argument("--plot", action="store_true")
     args = parser.parse_args()
     return args
 
@@ -136,12 +143,12 @@ def print_diffs(ys, bad, good):
     for idx, pt in enumerate(bad):
         diffs[idx] = pt[0] - ys[idx / pts_in_row]
         bad_sum += (diffs[idx]) ** 2
-    print("Bad sum: ", bad_sum)
+    print("Bad sum: ", bad_sum, file=sys.stderr)
     good_sum = 0
     for idx, pt in enumerate(good):
         diffs[idx + pnum] = pt[0] - ys[idx / pts_in_row]
-        good_sum += (diffs[idx]) ** 2
-    print("Good sum: ", good_sum)
+        good_sum += (diffs[idx + pnum]) ** 2
+    print("Good sum: ", good_sum, file=sys.stderr)
     _, pl = plt.subplots()
     pl.hist(np.abs(diffs[:pnum]), bins=15)
     pl.hist(-np.abs(diffs[pnum:]), bins=15)
@@ -154,10 +161,13 @@ def tform_pts(tform, pts):
     for pt in pts:
         rho, phi = cart2pol(pt)
         # find polyroot of [* tform, rhovec]
-        poly = np.array((tform[0], tform[1], tform[2], tform[3], - rho))
-        roots = np.roots(poly)
-        diff = np.abs(rho - roots)
-        rho2 = roots[np.argmin(diff)].real
+        if 1:
+            poly = np.array((tform[0], tform[1], tform[2], tform[3], - rho))
+            roots = np.roots(poly)
+            diff = np.abs(rho - roots)
+            rho2 = roots[np.argmin(diff)].real
+        else:
+            rho2 = (tform * rho ** np.arange(4, 0, -1)).sum()
         pt2 = pol2cart(rho2, phi)
         res.append(pt2)
     res = np.array(res)
@@ -170,15 +180,18 @@ def main():
         indata = pickle.load(infile)
 
     center = indata["center"]
+    global NORM
+    NORM = float(min(indata["imgsize"]))
     quads = indata["key_deps"].mean(axis=0)
-    print(quads, indata["key_deps"])
     estim, data, points = formulate(quads, center)
     result = solve(estim, data)
-    print("Center:", center)
-    # print(points)
-    shifted = tform_pts(result[:4], points)
-    plot_pts(result[4:], points, shifted)
-    print_diffs(result[4:], points, shifted)
+    print("{} {} {} {} {},{}".format(
+        result[0], result[1], result[2], result[3], center[1], center[0])
+    )
+    if args.plot:
+        shifted = tform_pts(result[:4], points)
+        plot_pts(result[4:], points, shifted)
+        print_diffs(result[4:], points, shifted)
 
 
 if __name__ == "__main__":

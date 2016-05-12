@@ -5,7 +5,6 @@ import pickle
 import argparse as ap
 
 import numpy as np
-import scipy as sp
 import do
 
 
@@ -32,6 +31,7 @@ def main():
     fusion = dict(
         center=indata["center"],
         key_deps=np.array(deps),
+        imgsize=imgs[0].shape,
     )
 
     if args.output is not None:
