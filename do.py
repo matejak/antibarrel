@@ -36,7 +36,20 @@ The method is this:
 """
 
 
-def get_lines(img, num_thresh=500, val_thresh=0.6):
+def get_lines(img, num_thresh=500, val_thresh=0.6, inspect=False):
+    """
+    Given an image, it labels it for lines.
+    It is achieved in this order:
+
+    #. The image is thresholded using :param:`val_thresh`.
+    #. Thresholded areas are labelled.
+    #. Reorder labels based on their sizes.
+    #. If an area spans over less points than :param:`num_thresh`,
+       assign a negative label value.
+
+    Returns:
+        The labelled image
+    """
     low = img.copy()
     low /= low.max()
     low[low < val_thresh] = 0
@@ -56,11 +69,21 @@ def get_lines(img, num_thresh=500, val_thresh=0.6):
             idx = cur_min
             cur_min -= 1
         label_map[arg] = idx
+    # this is the labels reordering
     labels = label_map[labels]
+    if inspect:
+        fig, pl = plt.subplots()
+        plo = pl.imshow(labels, vmin=1)
+        fig.colorbar(plo)
+        plt.show()
     return labels
 
 
 def make_fit(orig, masked, idx, center=None):
+    """
+    Given original array, the labelled one, label and positionss of the
+    zero coordinate, return a polynomial fit for hte respective line.
+    """
     mask = (masked == idx)  # .astype(int)
     grown = mask.copy()
     for ii in range(4):
@@ -80,7 +103,7 @@ def residue_x(coeffs, x, y):
     return ret
 
 
-def preclean_data(xs, ys):
+def preclean_rough(xs, ys):
     hi = np.percentile(ys, 80)
     lo = np.percentile(ys, 20)
     span = hi - lo
@@ -90,16 +113,16 @@ def preclean_data(xs, ys):
     return xs[is_ok], ys[is_ok]
 
 
-def robust_fit2(xs, ys):
-    # xs, ys = preclean_data(xs, ys)
+def robust_fit(xs, ys):
+    xs, ys = preclean_data(xs, ys)
     res_robust = opt.least_squares(residue_x, np.zeros(2), method="dogbox",
                                    loss='arctan', args=(xs, ys), verbose=0)
     return res_robust["x"]
 
 
-def robust_fit(xs, ys):
+def preclean_data(xs, ys):
     norig = len(xs)
-    xs, ys = preclean_data(xs, ys)
+    xs, ys = preclean_rough(xs, ys)
     for _ in range(3):
         regression = sfapi.ols("data ~ x", data=dict(data=ys, x=xs)).fit()
 
@@ -111,8 +134,6 @@ def robust_fit(xs, ys):
 
         xs = xs[selection]
         ys = ys[selection]
-    params = regression.params
-    res_robust = np.array((params["x"], params["Intercept"]), float)
 
     noutliers = norig - len(xs)
     print("Removed total {} outliers".format(noutliers))
@@ -126,9 +147,7 @@ def robust_fit(xs, ys):
         model_results=regression, ax=figure.axes[0])
     """
 
-    res_robust = robust_fit2(xs, ys)
-
-    return res_robust
+    return xs, ys
 
 
 def parse_args():
@@ -136,6 +155,7 @@ def parse_args():
     parser.add_argument("input")
     parser.add_argument("output", nargs="?")
     parser.add_argument("--plot", action="store_true")
+    parser.add_argument("--inspect", action="store_true")
     args = parser.parse_args()
     return args
 
@@ -146,8 +166,8 @@ def get_img(fname):
     return img
 
 
-def get_result(img, center=None):
-    ordered_labels = get_lines(img)
+def get_result(img, center=None, inspect=False):
+    ordered_labels = get_lines(img, val_thresh=0.5, num_thresh=1000, inspect=inspect)
 
     lines = [make_fit(img, ordered_labels, label, center)
              for label in range(1, int(ordered_labels.max()))]
@@ -181,7 +201,7 @@ def plot_result(* outputs):
 
         xp = np.linspace(0, img.shape[1], 200)
 
-        x, y = preclean_data(dsts, quads)
+        x, y = preclean_rough(dsts, quads)
         pl_quad.plot(x, y, "o")
         # pl.plot(dsts, lins, "o")
 
@@ -190,7 +210,7 @@ def plot_result(* outputs):
         pl_quad.set_title("Quadratic term")
 
         fit = output["key_lin"]
-        x, y = preclean_data(dsts, lins)
+        x, y = preclean_rough(dsts, lins)
         pl_lin.plot(x, y, "o")
         # pl.plot(dsts, lins, "o")
 
@@ -221,7 +241,7 @@ def plot_result(* outputs):
 def do():
     args = parse_args()
     img = get_img(args.input)
-    output = get_result(img)
+    output = get_result(img, inspect=args.inspect)
     if args.output is not None:
         with open(args.output, "wb") as outfile:
             pickle.dump(output, outfile)

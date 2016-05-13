@@ -8,3 +8,10 @@ What to do next
 
 * Think of better distribution of points we use in the distortion calculation.
 
+* Make a decent regression-test case (i.e. generate image composed of points
+  that is supposed to be distorted and the image we suppose being OK.
+  Then, ensure that the imagemagick's convert will produce results that are
+  consistent with ours.
+
+* Think: Maybe use something else than quadratic polynomial?
+* Use a different r -> r model.
