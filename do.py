@@ -79,15 +79,21 @@ def get_lines(img, num_thresh=500, val_thresh=0.6, inspect=False):
     return labels
 
 
-def make_fit(orig, masked, idx, center=None):
+def make_fit(orig, masked, idx, center=None, grow=6):
     """
     Given original array, the labelled one, label and positionss of the
     zero coordinate, return a polynomial fit for hte respective line.
     """
     mask = (masked == idx)  # .astype(int)
     grown = mask.copy()
-    for ii in range(4):
-        grown = ndim.morphology.binary_dilation(grown)
+    grown = ndim.morphology.binary_dilation(grown, iterations=grow)
+    if 0:
+        _, pl = plt.subplots()
+        base = mask.copy().astype(float)
+        base += grown.copy().astype(float)
+        base += orig / orig.max()
+        pl.imshow(base)
+        plt.show()
 
     y, x = np.where(grown)
     if center is not None:
