@@ -1,11 +1,9 @@
 data.pickle: summary.pickle
 	python do2.py $< $@ $(if $(PLOT),--plot)
 
-# summary.pickle: output-01.pickle output-02.pickle
 summary.pickle: output-01.pickle output-02.pickle
 	python conclude.py $^ $@
 
-# output-%.pickle: sinus-%.tiff
 output-%.pickle: s-%.tiff
 	python do.py $< $@ $(if $(PLOT),--plot)
 
@@ -15,7 +13,9 @@ RESULT: data.pickle
 f-%.tiff: s-%.tiff RESULT
 	convert $< -distort barrel "$$(cat RESULT)" $@ 
 
-show: f-01.tiff
+show: _show-01 _show-02
+
+_show-%: f-%.tiff
 	python do.py $< --plot
 
 clean:

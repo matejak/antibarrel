@@ -64,7 +64,7 @@ def _vals2val(vals, matrix, init_estim):
     return fun
 
 
-def formulate(fit_quad, center):
+def formulate(fit_quad, center, limits):
     """
     Returns:
         tuple - result, data, all_points
@@ -72,7 +72,7 @@ def formulate(fit_quad, center):
     .. note::
         Point is a coordinate pair (y, x)
     """
-    ylim = NORM
+    ylim, xlim = limits
     xlim = ylim
     polys = [(np.polyval(fit_quad, const), 0, const)
              for const in np.linspace(1e-1,  1, 13) ** 2 * ylim]
@@ -181,9 +181,10 @@ def main():
 
     center = indata["center"]
     global NORM
-    NORM = float(min(indata["imgsize"]))
+    halves = np.array(indata["imgsize"], int) // 2
+    NORM = halves.min()
     quads = indata["key_deps"].mean(axis=0)
-    estim, data, points = formulate(quads, center)
+    estim, data, points = formulate(quads, center, halves)
     result = solve(estim, data)
     print("{} {} {} {} {},{}".format(
         result[0], result[1], result[2], result[3], center[1], center[0])

@@ -205,6 +205,7 @@ def plot_result(* outputs):
         pl_quad.plot(x, y, "o")
         # pl.plot(dsts, lins, "o")
 
+        pl_quad.axhline(0, color="k")
         pl_quad.plot(x, np.poly1d(fit)(x),
                      label="{} = {:.3g}".format(idx, fit[-2]))
         pl_quad.set_title("Quadratic term")
