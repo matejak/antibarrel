@@ -5,7 +5,6 @@ import pickle
 import argparse as ap
 
 import numpy as np
-import scipy as sp
 import scipy.ndimage as ndim
 import scipy.optimize as opt
 import matplotlib.pyplot as plt
@@ -13,6 +12,8 @@ import matplotlib.pyplot as plt
 import statsmodels.formula.api as sfapi
 # import skimage as si
 # import skimage.measure
+
+import common
 
 
 """
@@ -79,7 +80,7 @@ def get_lines(img, num_thresh=500, val_thresh=0.6):
     return labels
 
 
-def make_fit(orig, masked, idx, center=None, grow=6):
+def make_fit(orig, masked, idx, grow=6, center=None):
     """
     Given original array, the labelled one, label and positionss of the
     zero coordinate, return a polynomial fit for hte respective line.
@@ -159,21 +160,17 @@ def preclean_data(xs, ys):
 def parse_args():
     parser = ap.ArgumentParser()
     parser.add_argument("input")
-    parser.add_argument("output", nargs="?")
+    parser.add_argument("output")
+    parser.add_argument("--val-threshold", type=float, default=0.5,
+                        help="Initial threshold for rough lines.")
+    parser.add_argument("--num-threshold", type=int, default=1000,
+                        help="Pixel count threshold for rogh lines.")
     parser.add_argument("--plot", action="store_true")
     args = parser.parse_args()
     return args
 
 
-def get_img(fname):
-    img = sp.misc.imread(fname, True)
-    img = img.astype(float)
-    return img
-
-
-def get_result(img, center=None):
-    ordered_labels = get_lines(img, val_thresh=0.5, num_thresh=1000)
-
+def get_result(img, ordered_labels, center=None):
     lines = [make_fit(img, ordered_labels, label, center)
              for label in range(1, int(ordered_labels.max()))]
 
@@ -187,7 +184,6 @@ def get_result(img, center=None):
     lines_out = (quads, lins, dsts)
 
     output = dict(
-        labels=ordered_labels,
         image=img,
         fits=np.array(lines),
         lines_out=lines_out,
@@ -247,13 +243,14 @@ def plot_result(* outputs):
 
 def do():
     args = parse_args()
-    img = get_img(args.input)
-    output = get_result(img)
-    if args.output is not None:
-        with open(args.output, "wb") as outfile:
-            pickle.dump(output, outfile)
-    if args.plot:
-        plot_result(output)
+    img = common.get_img(args.input)
+    ordered_labels = get_lines(img, args.num_threshold, args.val_threshold)
+    output = dict(
+        labels=ordered_labels,
+        srcim=args.input,
+    )
+    with open(args.output, "wb") as outfile:
+        pickle.dump(output, outfile)
 
 
 if __name__ == "__main__":

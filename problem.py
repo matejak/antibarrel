@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import sys
 import pickle
 import argparse as ap
