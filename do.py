@@ -36,7 +36,7 @@ The method is this:
 """
 
 
-def get_lines(img, num_thresh=500, val_thresh=0.6, inspect=False):
+def get_lines(img, num_thresh=500, val_thresh=0.6):
     """
     Given an image, it labels it for lines.
     It is achieved in this order:
@@ -71,7 +71,7 @@ def get_lines(img, num_thresh=500, val_thresh=0.6, inspect=False):
         label_map[arg] = idx
     # this is the labels reordering
     labels = label_map[labels]
-    if inspect:
+    if 0:  # was: if inspect
         fig, pl = plt.subplots()
         plo = pl.imshow(labels, vmin=1)
         fig.colorbar(plo)
@@ -161,7 +161,6 @@ def parse_args():
     parser.add_argument("input")
     parser.add_argument("output", nargs="?")
     parser.add_argument("--plot", action="store_true")
-    parser.add_argument("--inspect", action="store_true")
     args = parser.parse_args()
     return args
 
@@ -172,27 +171,28 @@ def get_img(fname):
     return img
 
 
-def get_result(img, center=None, inspect=False):
-    ordered_labels = get_lines(img, val_thresh=0.5, num_thresh=1000, inspect=inspect)
+def get_result(img, center=None):
+    ordered_labels = get_lines(img, val_thresh=0.5, num_thresh=1000)
 
     lines = [make_fit(img, ordered_labels, label, center)
              for label in range(1, int(ordered_labels.max()))]
 
     quads, lins, dsts = [np.array(x) for x in zip(* lines)]
     fit = robust_fit(dsts, quads)
-    key_dep = fit
+    fit_quad = fit
 
     fit = robust_fit(dsts, lins)
-    key_lin = fit
+    fit_lin = fit
 
     lines_out = (quads, lins, dsts)
 
     output = dict(
+        labels=ordered_labels,
         image=img,
         fits=np.array(lines),
         lines_out=lines_out,
-        key_dep=key_dep,
-        key_lin=key_lin,
+        fit_quad=fit_quad,
+        fit_lin=fit_lin,
     )
     return output
 
@@ -202,7 +202,7 @@ def plot_result(* outputs):
     _, pl_lin = plt.subplots()
     for idx, output in enumerate(outputs):
         quads, lins, dsts = output["lines_out"]
-        fit = output["key_dep"]
+        fit = output["fit_quad"]
         img = output["image"]
 
         xp = np.linspace(0, img.shape[1], 200)
@@ -216,7 +216,7 @@ def plot_result(* outputs):
                      label="{} = {:.3g}".format(idx, fit[-2]))
         pl_quad.set_title("Quadratic term")
 
-        fit = output["key_lin"]
+        fit = output["fit_lin"]
         x, y = preclean_rough(dsts, lins)
         pl_lin.plot(x, y, "o")
         # pl.plot(dsts, lins, "o")
@@ -248,7 +248,7 @@ def plot_result(* outputs):
 def do():
     args = parse_args()
     img = get_img(args.input)
-    output = get_result(img, inspect=args.inspect)
+    output = get_result(img)
     if args.output is not None:
         with open(args.output, "wb") as outfile:
             pickle.dump(output, outfile)

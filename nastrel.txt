@@ -1,0 +1,22 @@
+- obr -> prahovani -> labelling -> grow labelu -> fit
+  export labelu
+  -> fity
+
+- fity -> quad(y; center), lin(y; center)
+  export zavislosti
+  -> zavislosti  
+
+- 2 (nebo radeji n?) zavislosti -> center, odp. rotace
+  -> center, rot.
+
+- stary obr. -> orotovany obr.
+
+- 2 (nebo radeji n?) obr. -> cista zavislost quad(y)
+
+- quad(y)-> dvojice (x, yr), (x, yn) --- r ~ realne, n ~ namerene -> formulace modelu -> reseni modelu
+
+- stary obr. -> korigovany obr.
+
+
+model of b. distortion:
+http://www.robots.ox.ac.uk/~dclaus/publications/claus05rf_model.pdf
