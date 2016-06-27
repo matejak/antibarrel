@@ -6,7 +6,6 @@ import argparse as ap
 
 import numpy as np
 import scipy.ndimage as ndim
-import matplotlib.pyplot as plt
 
 import common
 
@@ -78,7 +77,6 @@ def parse_args():
                         help="Initial threshold for rough lines.")
     parser.add_argument("--num-threshold", type=int, default=1000,
                         help="Pixel count threshold for rogh lines.")
-    parser.add_argument("--plot", action="store_true")
     args = parser.parse_args()
     return args
 
