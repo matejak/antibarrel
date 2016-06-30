@@ -62,7 +62,8 @@ def do():
     except Exception:
         raise
     ordered_labels = indata["labels"]
-    lines = [make_fit(img, ordered_labels, label, args.grow, args.center)
+    center = args.center
+    lines = [make_fit(img, ordered_labels, label, args.grow, center)
              for label in range(1, int(ordered_labels.max()))]
     indata["lines"] = lines
 
