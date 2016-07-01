@@ -65,7 +65,7 @@ def _vals2val(vals, matrix, init_estim):
     return fun
 
 
-def formulate(all_points):
+def formulate(all_points, yvals):
     """
     Returns:
         all points (list of lists of (y, x) tuples)
@@ -84,7 +84,7 @@ def formulate(all_points):
 
     ptidx = 0
     for polyidx, points in enumerate(all_points):
-        result[4 + polyidx] = points[0][0]  # first point, y-coord
+        result[4 + polyidx] = yvals[polyidx]
         for pt in points:
             rho, phi = cart2pol(pt)
             sphi = np.sin(phi)
@@ -107,11 +107,11 @@ def solve(estimate, data):
     return res
 
 
-def get_result(all_points, imgsize):
+def get_result(all_points, yvals, imgsize):
     global NORM
     halves = np.array(imgsize, int) // 2
     NORM = halves.min()
-    estim, data = formulate(all_points)
+    estim, data = formulate(all_points, yvals)
     result = solve(estim, data)
     return result
 
@@ -130,7 +130,7 @@ def do():
     with open(args.input, "rb") as infile:
         indata = pickle.load(infile)
 
-    output = get_result(indata["points"], indata["imgsize"])
+    output = get_result(indata["points"], indata["yvals"], indata["imgsize"])
     outstr = ("{},{},{},{}"
               .format(* output))
 

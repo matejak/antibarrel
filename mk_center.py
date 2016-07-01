@@ -8,17 +8,12 @@ import numpy as np
 
 
 def compute(one, two):
-    """
-    zeros_at = [- data["key_dep"][-1] / data["key_dep"][-2]
-                for data in (one, two)]
-    slopes = [data["slope"] for data in (one, two)]
-    """
     zeros_at = [data["zero_at"]
                 for data in (one, two)]
     slopes = [data["slope"]
               for data in (one, two)]
     # assuming y = b * x + c,
-    # Essentially Dc / Db
+    # vvv is essentially Dc / Db
     x = (zeros_at[1] - zeros_at[0]) / (slopes[0] - slopes[1])
     y = x * slopes[0] + zeros_at[0]
     center = np.array((y, x))

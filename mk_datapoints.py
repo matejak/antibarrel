@@ -20,8 +20,9 @@ def get_points(fit_quad, limits):
     """
     ylim, xlim = limits
     xlim = ylim
+    consts = np.linspace(1e-1,  1, 13) ** 2 * ylim
     polys = [(np.polyval(fit_quad, const), 0, const)
-             for const in np.linspace(1e-1,  1, 13) ** 2 * ylim]
+             for const in consts]
     # a, b, c, d + n-times y0
     PTS_IN_POLY = 15
     # defaults are a, b, c, d
@@ -34,7 +35,7 @@ def get_points(fit_quad, limits):
                   for dom in np.linspace(1e-1, 1, PTS_IN_POLY) ** 2 * xlim]
         all_points.append(np.array(points, float))
 
-    return all_points
+    return all_points, consts
 
 
 def parse_args():
@@ -64,7 +65,7 @@ def do():
 
     center = args.center
 
-    points = get_points(quad_mean, imgsize // 2)
+    points, yvals = get_points(quad_mean, imgsize // 2)
 
     output = dict(
         center=center,
@@ -73,6 +74,7 @@ def do():
         lin_fits=lin_fits,
         lines=lines,
         points=points,
+        yvals=yvals,
     )
 
     with open(args.output, "wb") as outfile:
