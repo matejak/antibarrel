@@ -1,19 +1,15 @@
-labels-%.pickle: s-%.tiff mk_labels.py
-	python mk_labels.py $< $@
-
-lines-%.pickle: labels-%.pickle mk_lines.py
-	python mk_lines.py $< $@
-
-deps-%.pickle: lines-%.pickle mk_deps.py
-	python mk_deps.py $< $@
-
+ifeq ("$(IMDIR)","")
+	_IMDIR =
+else
+	_IMDIR = $(IMDIR)/
+endif
 INDICES = 01 02
 
 DEPS = $(foreach idx,$(INDICES),deps-$(idx).pickle)
 CENTER: $(DEPS) mk_center.py
 	python mk_center.py $(DEPS) $@
 
-rot-%.tiff: deps-%.pickle s-%.tiff CENTER mk_rot.py
+rot-%.tiff: deps-%.pickle $(_IMDIR)s-%.tiff CENTER mk_rot.py
 	python mk_rot.py $< --center "$$(cat CENTER)" $@
 
 labels2-%.pickle: rot-%.tiff mk_labels.py
@@ -50,6 +46,22 @@ ide-%: deps-%.pickle
 ipo: datapoints.pickle
 	python inspect_datapoints.py $<
 
+clean:
+	$(RM) *.pickle RESULT RESULT2 CENTER
+	$(RM) f-0*.tiff rot-*.tiff
+
+.PHONY: clean ila-% ili-% ide-% ipo all
+
+### vvv OLD STUFF vvv ###
+
+labels-%.pickle: $(_IMDIR)s-%.tiff mk_labels.py
+	python mk_labels.py $< $@
+
+lines-%.pickle: labels-%.pickle mk_lines.py
+	python mk_lines.py $< $@
+
+deps-%.pickle: lines-%.pickle mk_deps.py
+	python mk_deps.py $< $@
 
 data.pickle: summary.pickle
 	python do2.py $< $@ $(if $(PLOT),--plot)
@@ -57,22 +69,16 @@ data.pickle: summary.pickle
 summary.pickle: output-01.pickle output-02.pickle
 	python conclude.py $^ $@
 
-output-%.pickle: s-%.tiff
+output-%.pickle: $(_IMDIR)s-%.tiff
 	python do.py $< $@ $(if $(PLOT),--plot)
 
 RESULT: data.pickle
 	python problem.py $(if $(PLOT),--plot) $< > $@
 
-f-%.tiff: s-%.tiff RESULT
+f-%.tiff: $(_IMDIR)s-%.tiff RESULT
 	convert $< -distort barrel "$$(cat RESULT)" $@ 
 
 show: _show-01 _show-02
 
 _show-%: f-%.tiff
 	python do.py $< --plot
-
-clean:
-	$(RM) *.pickle RESULT RESULT2 CENTER
-	$(RM) f-0*.tiff rot-*.tiff
-
-.PHONY: clean ila-% ili-% ide-% ipo all
