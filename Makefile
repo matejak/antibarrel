@@ -5,7 +5,12 @@ else
 endif
 INDICES = 01 02
 
+VAL_THRESH ?= 0.5
+
 DEPS = $(foreach idx,$(INDICES),deps-$(idx).pickle)
+
+all: RESULT2 $(foreach idx,$(INDICES),c-$(idx).tiff) 
+
 CENTER: $(DEPS) mk_center.py
 	python mk_center.py $(DEPS) $@
 
@@ -13,7 +18,7 @@ rot-%.tiff: deps-%.pickle $(_IMDIR)s-%.tiff CENTER mk_rot.py
 	python mk_rot.py $< --center "$$(cat CENTER)" $@
 
 labels2-%.pickle: rot-%.tiff mk_labels.py
-	python mk_labels.py $< $@
+	python mk_labels.py --val-thresh $(VAL_THRESH) $< $@
 
 lines2-%.pickle: labels2-%.pickle rot-%.tiff CENTER mk_lines.py
 	python mk_lines.py $< --center "$$(cat CENTER)" $@
@@ -31,8 +36,6 @@ RESULT2: datapoints.pickle
 
 c-%.tiff: s-%.tiff RESULT2
 	convert $< -distort barrel "$$(cat RESULT2)" $@ 
-
-all: RESULT2 $(foreach idx,$(INDICES),c-$(idx).tiff) 
 
 ila-%: labels-%.pickle
 	python inspect_labels.py $<
@@ -55,7 +58,7 @@ clean:
 ### vvv OLD STUFF vvv ###
 
 labels-%.pickle: $(_IMDIR)s-%.tiff mk_labels.py
-	python mk_labels.py $< $@
+	python mk_labels.py --val-thresh $(VAL_THRESH) $< $@
 
 lines-%.pickle: labels-%.pickle mk_lines.py
 	python mk_lines.py $< $@

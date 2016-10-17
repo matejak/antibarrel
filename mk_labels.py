@@ -3,6 +3,8 @@
 # import cPickle as pickle
 import pickle
 import argparse as ap
+import logging
+import sys
 
 import numpy as np
 import scipy.ndimage as ndim
@@ -31,7 +33,7 @@ The method is this:
 """
 
 
-def get_lines(img, num_thresh=500, val_thresh=0.6):
+def get_lines(img, num_thresh=500, val_thresh=0.9):
     """
     Given an image, it labels it for lines.
     It is achieved in this order:
@@ -47,7 +49,11 @@ def get_lines(img, num_thresh=500, val_thresh=0.6):
     """
     low = img.copy()
     low /= low.max()
-    low[low < val_thresh] = 0
+    if val_thresh > 0:
+        low[low < val_thresh] = 0
+    else:
+        low[low > - val_thresh] = 0
+        low = 1 - low
 
     labels, num = ndim.label(low)
     nums = np.zeros(num + 1, int)
@@ -73,10 +79,12 @@ def parse_args():
     parser = ap.ArgumentParser()
     parser.add_argument("input")
     parser.add_argument("output")
-    parser.add_argument("--val-threshold", type=float, default=0.5,
-                        help="Initial threshold for rough lines.")
+    parser.add_argument(
+        "--val-thresh", type=float, default=0.78,
+        help="Initial threshold for rough lines. Use negative values "
+        "to suggest that we work with negative images")
     parser.add_argument("--num-threshold", type=int, default=1000,
-                        help="Pixel count threshold for rogh lines.")
+                        help="Pixel count threshold for rough lines.")
     args = parser.parse_args()
     return args
 
@@ -84,7 +92,11 @@ def parse_args():
 def do():
     args = parse_args()
     img = common.get_img(args.input)
-    ordered_labels = get_lines(img, args.num_threshold, args.val_threshold)
+    ordered_labels = get_lines(img, args.num_threshold, args.val_thresh)
+    if len(ordered_labels) == 0:
+        logging.error("There are zero labels, something must have gone wrong.")
+        sys.exit(2)
+
     output = dict(
         labels=ordered_labels,
         srcim=args.input,

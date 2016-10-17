@@ -1,17 +1,12 @@
 # -*- coding: utf-8 -*-
 
-# import cPickle as pickle
 import pickle
 import argparse as ap
+import logging
+import sys
 
 import numpy as np
 import scipy.ndimage as ndim
-import scipy.optimize as opt
-import matplotlib.pyplot as plt
-
-import statsmodels.formula.api as sfapi
-# import skimage as si
-# import skimage.measure
 
 import common
 
@@ -24,13 +19,6 @@ def make_fit(orig, masked, idx, grow=6, center=None):
     mask = (masked == idx)  # .astype(int)
     grown = mask.copy()
     grown = ndim.morphology.binary_dilation(grown, iterations=grow)
-    if 0:
-        _, pl = plt.subplots()
-        base = mask.copy().astype(float)
-        base += grown.copy().astype(float)
-        base += orig / orig.max()
-        pl.imshow(base)
-        plt.show()
 
     y, x = np.where(grown)
     if center is not None:
@@ -42,13 +30,12 @@ def make_fit(orig, masked, idx, grow=6, center=None):
 
 def parse_args():
     parser = ap.ArgumentParser()
-    parser.add_argument("input",
-                        help="Pass the filename of the output of 'label.py'")
+    parser.add_argument(
+        "input", help="Pass the filename of the output of 'mk_labels.py'")
     parser.add_argument("output")
     parser.add_argument("--grow", type=int, default=6,
                         help="Pixel count threshold for rogh lines.")
     parser.add_argument("--center", type=common.point, default=None)
-    parser.add_argument("--plot", action="store_true")
     args = parser.parse_args()
     return args
 
@@ -62,6 +49,10 @@ def do():
     except Exception:
         raise
     ordered_labels = indata["labels"]
+    if len(ordered_labels) == 0:
+        logging.error("There are zero labels, something must have gone wrong.")
+        sys.exit(2)
+
     lines = [make_fit(img, ordered_labels, label, args.grow, args.center)
              for label in range(1, int(ordered_labels.max()))]
     indata["lines"] = lines

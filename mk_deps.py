@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# import cPickle as pickle
+
 import pickle
 import argparse as ap
 
@@ -17,6 +17,14 @@ def residue_x(coeffs, x, y):
 
 
 def preclean_rough(xs, ys):
+    """
+    Takes out values that are either too high or too high.
+    It works with 80 and 20 percentile of ``ys`` :math:`y_20` and :math:`y_80`.
+    The difference :math:`y_80 - y_20` is ``span``
+    and every ``y`` from ``ys`` (and the corresponding ``x``)
+    lower than :math:`y_20 - span` or greater than :math:`y_80 + span`
+    is purged.
+    """
     hi = np.percentile(ys, 80)
     lo = np.percentile(ys, 20)
     span = hi - lo
@@ -27,6 +35,10 @@ def preclean_rough(xs, ys):
 
 
 def robust_fit(xs, ys):
+    """
+    Given x and y values, first remove probable outliers and then
+    perform robust fit.
+    """
     xs, ys = preclean_data(xs, ys)
     res_robust = opt.least_squares(residue_x, np.zeros(2), method="dogbox",
                                    loss='arctan', args=(xs, ys), verbose=0)
@@ -34,6 +46,10 @@ def robust_fit(xs, ys):
 
 
 def preclean_data(xs, ys):
+    """
+    First of all, remove apparent outliers, then remove outliers that are not
+    so apparent.
+    """
     norig = len(xs)
     xs, ys = preclean_rough(xs, ys)
     for _ in range(3):
@@ -52,14 +68,13 @@ def preclean_data(xs, ys):
         noutliers = norig - len(xs)
         print("Removed total {} outliers".format(noutliers))
 
-    """
-    import statsmodels.api
-    import statsmodels.graphics as smgraphics
+        # vvv may be needed, even if it doesn't seem so
+        import statsmodels.api
+        import statsmodels.graphics as smgraphics
 
-    figure = smgraphics.regressionplots.plot_fit(regression, 1)
-    smgraphics.regressionplots.abline_plot(
-        model_results=regression, ax=figure.axes[0])
-    """
+        figure = smgraphics.regressionplots.plot_fit(regression, 1)
+        smgraphics.regressionplots.abline_plot(
+            model_results=regression, ax=figure.axes[0])
 
     return xs, ys
 
@@ -78,7 +93,6 @@ def get_result(lines):
     slope = np.polyval(fit_lin, zero_at)
 
     output = dict(
-        lines=lines,
         lines_out=lines_out,
         fit_quad=fit_quad,
         fit_lin=fit_lin,
@@ -90,10 +104,9 @@ def get_result(lines):
 
 def parse_args():
     parser = ap.ArgumentParser()
-    parser.add_argument("input",
-                        help="Pass the filename of the output of 'label.py'")
+    parser.add_argument(
+        "input", help="Pass the filename of the output of 'mk_lines.py'")
     parser.add_argument("output")
-    parser.add_argument("--plot", action="store_true")
     args = parser.parse_args()
     return args
 
