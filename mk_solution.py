@@ -12,11 +12,18 @@ NORM = None
 
 
 def cart2pol(pt):
+    """
+    Args:
+        pt (tuple): A point (y, x)
+
+    Returns:
+        tuple - :math:`(\\rho, \\varphi)`
+    """
     x = pt[1]
     y = pt[0]
     rho = np.sqrt(x ** 2 + y ** 2) / NORM
     phi = np.arctan2(y, x)
-    return(rho, phi)
+    return (rho, phi)
 
 
 def pol2cart(rho, phi):
@@ -26,35 +33,44 @@ def pol2cart(rho, phi):
     return np.array((y, x), float)
 
 
-def _row2val2(vals, rho, ysf):
-    ys = np.ones(4) * rho
-    for idx in range(3):
-        ys[:(-idx - 1)] *= rho
-    # ^^^ should result in
-    # ^^^ y^4, y^3, y^2, y
-    ret = 0
-    ret -= ysf
-    ret += (vals * ys).sum()
-    return ret
-
-
 def _row2val(vals, rho, ysf):
+    """
+    Args:
+        vals: The current solution
+        rho: The radius of the current poin
+        ysf: The constant coeff of the line (the point is on) over sine of the
+            azimuth normed (:math:`y_0 / \\sin(\\varphi) / N`)
+
+    Return:
+        float - something that should ideally be zero, but can be any number.
+    """
     ys = np.ones(4) * ysf
     for idx in range(3):
         ys[:(-idx - 1)] *= ysf
     # ^^^ should result in
     # ^^^ y^4, y^3, y^2, y
     ret = 0
-    ret -= rho
+    # vvv should be equal to rho
     ret += (vals * ys).sum()
+    ret -= rho
+    # TODO: Why not to return abs(ret)
     return ret
 
 
-# vals: a, b, c, d, + n-times y0
-# matrix row: R, sf, idx
 def _vals2val(vals, matrix, init_estim):
+    """
+    Args:
+        vals: The current solution ---
+            (a, b, c, d, <n-times the constant coeff>), first 4 are the solution
+            we seek, rest is auxiliary.
+        matrix: The second output of :func:`formulate`
+        init_estim
+    """
     fun = 0
     for row in matrix:
+        # row = (\rho, \sin(\varphi), index
+        # inc = _row2val(<solution>, <\rho>, <the current estimate of y_0> /
+        # <sin(\varphi)> / NORM
         inc = _row2val(vals[:4], row[0], vals[4 + int(row[2])] / row[1] / NORM)
         # fun += abs(inc)
         fun += inc ** 2
@@ -67,8 +83,14 @@ def _vals2val(vals, matrix, init_estim):
 
 def formulate(all_points, yvals):
     """
+    Args:
+        all_points (list of lists): List of points on curved lines.
+        yvals (array): Numbers close to constant coefficients of lines.
+
     Returns:
-        all points (list of lists of (y, x) tuples)
+        tuple - (initial estimation
+        all points --- array where each point has
+        :math:`(\\rho, \\sin(\\varphi), i)`, where :math:`i` is the line index)
 
     .. note::
         Point is a coordinate pair (y, x)
@@ -96,6 +118,13 @@ def formulate(all_points, yvals):
 
 
 def solve(estimate, data):
+    """
+    Supply output of :func:`formulate`
+
+    Returns:
+        tuple - First go the aberration coeffs,
+            then the computed constant coeffs
+    """
     # print("Initial: ", _vals2val(estimate, data, estimate), file=sys.stderr)
     meth = "Powell"
     res = opt.minimize(_vals2val, estimate, args=(data, estimate),

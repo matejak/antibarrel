@@ -42,7 +42,6 @@ def parse_args():
     parser = ap.ArgumentParser()
     parser.add_argument("input", nargs="+",
                         help="The deps pickles.")
-    parser.add_argument("--center")
     parser.add_argument("output")
     args = parser.parse_args()
     return args
@@ -63,12 +62,9 @@ def do():
     img = common.get_img(indata[-1]["srcim"])
     imgsize = np.array(img.shape, int)
 
-    center = args.center
-
     points, yvals = get_points(quad_mean, imgsize // 2)
 
     output = dict(
-        center=center,
         imgsize=imgsize,
         quad_fits=quad_fits,
         lin_fits=lin_fits,

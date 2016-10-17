@@ -141,3 +141,7 @@ These steps are performed:
 #. Norming --- typically, the coeffs of the aberration are normed so that the radius of the largest circle that can fit into the image is equal to one.
 #. The data are processed.
    Using `the common model <http://www.imagemagick.org/Usage/distorts/#barrel>`_, the aberration can be described in four coefficients.
+   The model has to solve both these four coefficients, but also the constant coefficient of the supposedly horizontal lines.
+   As the input, we supply a linear array of points, where points have their :math:`(\rho, \sin(\varphi), i)`, where :math:`i` is the index of the line the point belongs to.
+#. The model is solved --- aberration and lines constant coefficients are determined in such way that they justify how a point can appear on a parabole.
+#. The aberration coeffs are written to a file.
