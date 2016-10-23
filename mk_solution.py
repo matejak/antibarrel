@@ -7,23 +7,10 @@ import argparse as ap
 import numpy as np
 import scipy.optimize as opt
 
+import common
+
 
 NORM = None
-
-
-def cart2pol(pt):
-    """
-    Args:
-        pt (tuple): A point (y, x)
-
-    Returns:
-        tuple - :math:`(\\rho, \\varphi)`
-    """
-    x = pt[1]
-    y = pt[0]
-    rho = np.sqrt(x ** 2 + y ** 2) / NORM
-    phi = np.arctan2(y, x)
-    return (rho, phi)
 
 
 def pol2cart(rho, phi):
@@ -108,7 +95,7 @@ def formulate(all_points, yvals):
     for polyidx, points in enumerate(all_points):
         result[4 + polyidx] = yvals[polyidx]
         for pt in points:
-            rho, phi = cart2pol(pt)
+            rho, phi = common.cart2pol(pt[0], pt[1])
             sphi = np.sin(phi)
             data[ptidx, 0] = rho
             data[ptidx, 1] = sphi

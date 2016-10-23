@@ -5,6 +5,39 @@ import numpy as np
 COLORS = "bgc"
 
 
+def cart2pol(y, x, center=(0, 0), norm=1):
+    """
+    Args:
+        y
+        x
+        center (tuple-lik): (Y, X)
+
+    Returns:
+        tuple - :math:`(\\rho, \\varphi)`
+    """
+    x -= center[1]
+    y -= center[0]
+    rho = np.sqrt(x ** 2 + y ** 2) / norm
+    phi = np.arctan2(y, x)
+    return(rho, phi)
+
+
+def pol2cart(rho, phi, center=(0, 0), norm=1):
+    """
+    Args:
+        rho
+        phi
+        center (tuple-lik): (Y, X)
+
+    Returns:
+        np.ndarray - :math:`(y, x)`
+    """
+    rho *= norm
+    x = rho * np.cos(phi) + center[1]
+    y = rho * np.sin(phi) + center[0]
+    return np.array((y, x), float)
+
+
 def point(stri):
     import argparse as ap
     try:
