@@ -120,6 +120,7 @@ def solve(estimate, data):
     # print("Line shift: ",
     #       res[4:] - estimate[4:], _vals2val(res, data, estimate),
     #       file=sys.stderr)
+    print(res)
     return res
 
 

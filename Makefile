@@ -52,11 +52,17 @@ ide-%: deps-%.pickle
 ipo: datapoints.pickle
 	python inspect_datapoints.py $<
 
+ili2-%: lines2-%.pickle
+	python inspect_lines.py $<
+
+ide2-%: deps2-%.pickle
+	python inspect_deps.py $<
+
 clean:
 	$(RM) *.pickle RESULT RESULT2 CENTER
 	$(RM) f-0*.tiff rot-*.tiff
 
-.PHONY: clean ila-% ili-% ide-% ipo all
+.PHONY: clean ila-% ili-% ide-% ipo ili2-% ide2-% all
 
 ### vvv OLD STUFF vvv ###
 
