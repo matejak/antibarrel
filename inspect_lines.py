@@ -12,7 +12,10 @@ import common
 
 def show_lines(img, lines, center=(0, 0)):
     fig, pl = plt.subplots(1, 1)
-    pl.imshow(img, cmap=plt.cm.gray)
+    extent = np.array((0, img.shape[1], 0, img.shape[0]))
+    extent[:2] -= center[1]
+    extent[2:] -= center[0]
+    pl.imshow(img, cmap=plt.cm.gray, extent=extent, origin="lower")
     dom = np.arange(img.shape[1]) - center[1]
     pl.autoscale(False)
     for line in lines:
@@ -64,7 +67,7 @@ def do():
 
     toshow = [int(idx) for idx in args.show.split("-")]
     toshow = slice(toshow[0], toshow[1])
-    show_lines(img, lines[toshow])
+    show_lines(img, lines[toshow], inp.get("center", (0, 0)))
     common.show_points(lines)
     plt.show()
 

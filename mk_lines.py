@@ -53,9 +53,12 @@ def do():
         logging.error("There are zero labels, something must have gone wrong.")
         sys.exit(2)
 
-    lines = [make_fit(img, ordered_labels, label, args.grow, args.center)
+    center = args.center
+    lines = [make_fit(img, ordered_labels, label, args.grow, center)
              for label in range(1, int(ordered_labels.max()))]
     indata["lines"] = lines
+    if center is not None:
+        indata["center"] = center
 
     with open(args.output, "wb") as outfile:
         pickle.dump(indata, outfile)

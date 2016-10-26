@@ -1,12 +1,11 @@
 ifeq ("$(IMDIR)","")
-	_IMDIR =
+	_IMDIR = .
 else
 	_IMDIR = $(IMDIR)
 endif
 
-STEM = s-%.tiff
-
-INDICES = 01 02
+INDICES ?= 00 01
+STEM ?= s-%.tiff
 
 VAL_THRESH ?= 0.5
 
@@ -34,11 +33,11 @@ IMGS2 = $(foreach idx,$(INDICES),rot-$(idx).tiff)
 datapoints.pickle: $(DEPS2) $(IMGS2) mk_datapoints.py
 	python mk_datapoints.py $(DEPS2) $@
 
-RESULT2: datapoints.pickle
+RESULT2: datapoints.pickle mk_solution.py
 	python mk_solution.py $< $@
 
-c-%.tiff: $(IMDIR)/$(STEM) RESULT2
-	convert $< -distort barrel "$$(cat RESULT2)" $@ 
+c-%.tiff: $(_IMDIR)/$(STEM) RESULT2
+	convert $< -distort barrel "$$(cat RESULT2 | tr ',' ' ') $$(cat CENTER)" $@ 
 
 ila-%: labels-%.pickle
 	python inspect_labels.py $<
@@ -51,6 +50,9 @@ ide-%: deps-%.pickle
 
 ipo: datapoints.pickle
 	python inspect_datapoints.py $<
+
+ila2-%: labels2-%.pickle
+	python inspect_labels.py $<
 
 ili2-%: lines2-%.pickle
 	python inspect_lines.py $<
