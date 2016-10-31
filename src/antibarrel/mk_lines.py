@@ -8,7 +8,7 @@ import sys
 import numpy as np
 import scipy.ndimage as ndim
 
-import common
+import antibarrel.common as common
 
 
 def make_fit(orig, masked, idx, grow=6, center=None):
@@ -40,7 +40,7 @@ def parse_args():
     return args
 
 
-def do():
+def main():
     args = parse_args()
     with open(args.input, "rb") as infile:
         indata = pickle.load(infile)
@@ -65,4 +65,4 @@ def do():
 
 
 if __name__ == "__main__":
-    do()
+    main()

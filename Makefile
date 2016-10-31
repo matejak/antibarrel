@@ -4,7 +4,7 @@ else
 	_IMDIR = $(IMDIR)
 endif
 
-INDICES ?= 00 01
+INDICES ?= 01 02
 STEM ?= s-%.tiff
 
 VAL_THRESH ?= 0.5
@@ -13,64 +13,67 @@ DEPS = $(foreach idx,$(INDICES),deps-$(idx).pickle)
 
 all: RESULT $(foreach idx,$(INDICES),c-$(idx).tiff) 
 
-CENTER: $(DEPS) mk_center.py
-	python mk_center.py $(DEPS) $@
+UP2DATE:
+	touch $@
 
-rot-%.tiff: deps-%.pickle CENTER mk_rot.py
-	python mk_rot.py $< --center "$$(cat CENTER)" $@
+CENTER: $(DEPS) UP2DATE
+	abar-center $(DEPS) $@
 
-labels-%.pickle: $(_IMDIR)/$(STEM) mk_labels.py
-	python mk_labels.py --val-thresh $(VAL_THRESH) $< $@
+rot-%.tiff: deps-%.pickle CENTER UP2DATE
+	abar-rot $< --center "$$(cat CENTER)" $@
 
-lines-%.pickle: labels-%.pickle mk_lines.py
-	python mk_lines.py $< $@
+labels-%.pickle: $(_IMDIR)/$(STEM) UP2DATE
+	abar-labels --val-thresh $(VAL_THRESH) $< $@
 
-deps-%.pickle: lines-%.pickle mk_deps.py
-	python mk_deps.py $< $@
+lines-%.pickle: labels-%.pickle UP2DATE
+	abar-lines $< $@
 
-labels2-%.pickle: rot-%.tiff mk_labels.py
-	python mk_labels.py --val-thresh $(VAL_THRESH) $< $@
+deps-%.pickle: lines-%.pickle UP2DATE
+	abar-deps $< $@
 
-lines2-%.pickle: labels2-%.pickle rot-%.tiff CENTER mk_lines.py
-	python mk_lines.py $< --center "$$(cat CENTER)" $@
+labels2-%.pickle: rot-%.tiff UP2DATE
+	abar-labels --val-thresh $(VAL_THRESH) $< $@
 
-deps2-%.pickle: lines2-%.pickle rot-%.tiff mk_deps.py
-	python mk_deps.py $< $@
+lines2-%.pickle: labels2-%.pickle rot-%.tiff CENTER UP2DATE
+	abar-lines $< --center "$$(cat CENTER)" $@
+
+deps2-%.pickle: lines2-%.pickle rot-%.tiff UP2DATE
+	abar-deps $< $@
 
 DEPS2 = $(foreach idx,$(INDICES),deps2-$(idx).pickle)
 IMGS2 = $(foreach idx,$(INDICES),rot-$(idx).tiff)
-datapoints.pickle: $(DEPS2) $(IMGS2) mk_datapoints.py
-	python mk_datapoints.py $(DEPS2) $@
+datapoints.pickle: $(DEPS2) $(IMGS2) UP2DATE
+	abar-datapoints $(DEPS2) $@
 
-RESULT: datapoints.pickle mk_solution.py
-	python mk_solution.py $< $@
+RESULT: datapoints.pickle UP2DATE
+	abar-solution $< $@
 
 c-%.tiff: $(_IMDIR)/$(STEM) RESULT
 	convert $< -distort barrel "$$(cat RESULT | tr ',' ' ') $$(cat CENTER)" $@ 
 
 ila-%: labels-%.pickle
-	python inspect_labels.py $<
+	abari-labels $<
 
 ili-%: lines-%.pickle
-	python inspect_lines.py $<
+	abari-lines $<
 
 ide-%: deps-%.pickle
-	python inspect_deps.py $<
+	abari-deps $<
 
 ipo: datapoints.pickle
-	python inspect_datapoints.py $<
+	abari-datapoints $<
 
 ila2-%: labels2-%.pickle
-	python inspect_labels.py $<
+	abari-labels $<
 
 ili2-%: lines2-%.pickle
-	python inspect_lines.py $<
+	abari-lines $<
 
 ide2-%: deps2-%.pickle
-	python inspect_deps.py $<
+	abari-deps $<
 
 clean:
-	$(RM) *.pickle RESULT CENTER
+	$(RM) *.pickle RESULT CENTER UP2DATE
 	$(RM) f-0*.tiff rot-*.tiff
 
 .PHONY: clean ila-% ili-% ide-% ipo ili2-% ide2-% all

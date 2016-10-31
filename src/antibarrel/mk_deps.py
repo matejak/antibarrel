@@ -80,6 +80,18 @@ def preclean_data(xs, ys):
 
 
 def get_result(lines):
+    """
+    Args:
+        lines
+
+    Returns:
+        dict - keys:
+            * ``lines_out``: Tuple of arrays of (``a``, ``b``, c``)
+            * ``fit_quad``: Qudratic fit :math:`a(c)`
+            * ``fit_lin``: Linear fit :math:`b(c)`
+            * ``zero_at``: For which ``c`` :math:`a(c) = 0`
+            * ``slope``: Which ``b`` corresponds to ``zero_at``
+    """
     quads, lins, dsts = [np.array(x) for x in zip(* lines)]
     fit = robust_fit(dsts, quads)
     fit_quad = fit
@@ -111,7 +123,7 @@ def parse_args():
     return args
 
 
-def do():
+def main():
     args = parse_args()
     with open(args.input, "rb") as infile:
         indata = pickle.load(infile)
@@ -123,4 +135,4 @@ def do():
 
 
 if __name__ == "__main__":
-    do()
+    main()

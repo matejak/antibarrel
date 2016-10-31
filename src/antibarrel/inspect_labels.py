@@ -7,7 +7,7 @@ import argparse as ap
 import numpy as np
 import matplotlib.pyplot as plt
 
-import common
+import antibarrel.common
 
 
 def show(im, labels):
@@ -33,7 +33,7 @@ def parse_args():
     return args
 
 
-def do():
+def main():
     args = parse_args()
     with open(args.input, "rb") as infile:
         inp = pickle.load(infile)
@@ -43,4 +43,4 @@ def do():
 
 
 if __name__ == "__main__":
-    do()
+    main()

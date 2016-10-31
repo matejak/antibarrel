@@ -9,7 +9,7 @@ import sys
 import numpy as np
 import scipy.ndimage as ndim
 
-import common
+import antibarrel.common as common
 
 
 """
@@ -38,10 +38,10 @@ def get_lines(img, num_thresh=500, val_thresh=0.9):
     Given an image, it labels it for lines.
     It is achieved in this order:
 
-    #. The image is thresholded using :param:`val_thresh`.
+    #. The image is thresholded using ``val_thresh``.
     #. Thresholded areas are labelled.
     #. Reorder labels based on their sizes.
-    #. If an area spans over less points than :param:`num_thresh`,
+    #. If an area spans over less points than ``num_thresh``,
        assign a negative label value.
 
     Returns:
@@ -89,7 +89,7 @@ def parse_args():
     return args
 
 
-def do():
+def main():
     args = parse_args()
     img = common.get_img(args.input)
     ordered_labels = get_lines(img, args.num_threshold, args.val_thresh)
@@ -106,4 +106,4 @@ def do():
 
 
 if __name__ == "__main__":
-    do()
+    main()

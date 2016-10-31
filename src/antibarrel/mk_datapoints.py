@@ -5,14 +5,13 @@ import pickle
 import argparse as ap
 
 import numpy as np
-import scipy.optimize as opt
 
-import common
+import antibarrel.common as common
 
 
 def get_points(fit_quad, limits):
     """
-    Returns:
+    Returns: tuple
         tuple - result, data, all_points
 
     .. note::
@@ -47,7 +46,7 @@ def parse_args():
     return args
 
 
-def do():
+def main():
     args = parse_args()
     indata = []
     for fname in args.input:
@@ -78,4 +77,4 @@ def do():
 
 
 if __name__ == "__main__":
-    do()
+    main()

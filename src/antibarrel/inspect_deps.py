@@ -6,7 +6,7 @@ import argparse as ap
 
 import matplotlib.pyplot as plt
 
-import common
+import antibarrel.common
 
 
 def parse_args():
@@ -16,24 +16,17 @@ def parse_args():
     return args
 
 
-def plot_points(ys, pts):
-    _, pl = plt.subplots()
-    for ptcoll in pts:
-        pl.plot(ptcoll[:, 1], ptcoll[:, 0], "o", color="b")
-    for ycoord in ys:
-        pl.axhline(ycoord)
-    plt.grid()
-
-
-def do():
+def main():
     args = parse_args()
     with open(args.input, "rb") as infile:
         inp = pickle.load(infile)
 
-    common.show_points_more(inp["lines"], (inp["quad_fits"], inp["lin_fits"]))
-    plot_points(inp["yvals"], inp["points"])
+    lines = inp["lines"]
+    deps = [inp[key] for key in ("fit_quad", "fit_lin")]
+
+    common.show_points(lines, deps)
     plt.show()
 
 
 if __name__ == "__main__":
-    do()
+    main()

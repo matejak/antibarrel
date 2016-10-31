@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# import cPickle as pickle
 import pickle
 import argparse as ap
 
@@ -18,7 +17,6 @@ def compute(one, two):
     y = x * slopes[0] + zeros_at[0]
     center = np.array((y, x))
     center = np.round(center).astype(int)
-    # print("Aberration center at ({}, {})".format(* center))
 
     return center
 
@@ -32,7 +30,7 @@ def parse_args():
     return args
 
 
-def do():
+def main():
     args = parse_args()
     indata = []
     for fname in args.input:
@@ -47,4 +45,4 @@ def do():
 
 
 if __name__ == "__main__":
-    do()
+    main()

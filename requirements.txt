@@ -1,0 +1,5 @@
+setuptools>=1.0
+statsmodels
+numpy>=1.7
+scipy>=0.12
+pillow

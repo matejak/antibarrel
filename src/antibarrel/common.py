@@ -65,7 +65,9 @@ def show_points_more(linelist, deplist=None):
     _, pl_quad = plt.subplots()
     _, pl_lin = plt.subplots()
 
-    def idx2alpha(idx): return 1 - 0.8 * (idx / len(lines))
+    def idx2alpha(idx):
+        ret = 1 - 0.8 * (idx / len(lines))
+        return ret
 
     xmin = float("inf")
     xmax = float("-inf")

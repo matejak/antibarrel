@@ -7,7 +7,7 @@ import argparse as ap
 import numpy as np
 import scipy.ndimage as ndim
 
-import common
+import antibarrel.common as common
 
 
 def parse_args():
@@ -33,7 +33,7 @@ def rot2center(what, angle, center=None):
     return imgR[padY[0]:- padY[1], padX[0]:- padX[1]]
 
 
-def do():
+def main():
     args = parse_args()
     with open(args.input, "rb") as infile:
         indata = pickle.load(infile)
@@ -46,4 +46,4 @@ def do():
 
 
 if __name__ == "__main__":
-    do()
+    main()

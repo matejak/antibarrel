@@ -7,7 +7,7 @@ import argparse as ap
 import numpy as np
 import scipy.optimize as opt
 
-import common
+import antibarrel.common as common
 
 
 NORM = None
@@ -143,7 +143,7 @@ def parse_args():
     return args
 
 
-def do():
+def main():
     args = parse_args()
     indata = []
     with open(args.input, "rb") as infile:
@@ -158,4 +158,4 @@ def do():
 
 
 if __name__ == "__main__":
-    do()
+    main()

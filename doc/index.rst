@@ -12,6 +12,7 @@ Contents:
    :maxdepth: 2
 
    components
+   antibarrel
 
 
 Indices and tables
