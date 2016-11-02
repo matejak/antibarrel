@@ -13,10 +13,15 @@ import antibarrel.common as common
 def show(im, labels):
     fig, pl = plt.subplots(1, 2, sharex=True, sharey=True, squeeze=True)
     pl[0].imshow(im, cmap=plt.cm.gray)
+    pl[0].set_xlabel("x [px]")
+    pl[0].set_ylabel("y [px]")
     # We want to make the background and insignificant labels darkest.
     labels_good = labels.copy()
     labels_good[labels <= 0] = labels.max() + 1
     pl[1].imshow(labels_good, cmap=plt.cm.hot_r)
+    pl[1].set_xlabel("x [px]")
+    # vvv not needed, we have sharey of parallel images
+    # pl[1].set_ylabel("y [px]")
 
     labels_bad = labels.copy()
     labels_bad[labels < 0] = 10

@@ -22,6 +22,8 @@ def show_lines(img, lines, center=(0, 0)):
         hom = np.polyval(line, dom)
         label = "a = {:.3g}".format(line[-3])
         pl.plot(dom, hom, label=label, lw=2)
+    pl.set_xlabel("x [px]")
+    pl.set_ylabel("y [px]")
     leg = pl.legend(fancybox=True)
     leg.get_frame().set_alpha(0.7)
 
