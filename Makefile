@@ -4,7 +4,7 @@ else
 	_IMDIR = $(IMDIR)
 endif
 
-INDICES ?= 01 02
+INDICES ?= 01 00
 STEM ?= s-%.tiff
 
 VAL_THRESH ?= 0.5

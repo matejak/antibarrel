@@ -19,8 +19,7 @@ def main():
 
     figsize = [float(x) for x in args.size.split(",")]
     fig, plt = pyl.subplots(figsize=figsize, dpi=args.dpi)
-    # plot_dep(plt, _tform)
-    plot_dep(plt, _tform, pts)
+    plot_dep(plt, _tform)
     fig.savefig(args.output)
 
 

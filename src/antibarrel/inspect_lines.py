@@ -7,7 +7,7 @@ import argparse as ap
 import numpy as np
 import matplotlib.pyplot as plt
 
-import antibarrel.common
+import antibarrel.common as common
 
 
 def show_lines(img, lines, center=(0, 0)):
@@ -15,14 +15,13 @@ def show_lines(img, lines, center=(0, 0)):
     extent = np.array((0, img.shape[1], 0, img.shape[0]))
     extent[:2] -= center[1]
     extent[2:] -= center[0]
-    pl.imshow(img, cmap=plt.cm.gray, extent=extent, origin="lower")
+    pl.imshow(img, cmap=plt.cm.gray, extent=extent)  # , origin="lower")
     dom = np.arange(img.shape[1]) - center[1]
     pl.autoscale(False)
     for line in lines:
         hom = np.polyval(line, dom)
-        mult = 1e7
-        label = "a⋅{:.3g} = {:.3g}".format(mult, line[-3] * mult)
-        pl.plot(dom, hom, label=label)
+        label = "a = {:.3g}".format(line[-3])
+        pl.plot(dom, hom, label=label, lw=2)
     leg = pl.legend(fancybox=True)
     leg.get_frame().set_alpha(0.7)
 
@@ -44,9 +43,13 @@ def show_points(lines):
     pl_quad.grid()
     pl_quad.axhline(0, color="k")
     pl_quad.set_title("Quadratic term")
+    pl_quad.set_xlabel("c [px]")
+    pl_quad.set_ylabel("a [1 / px]")
 
     pl_lin.grid()
     pl_lin.set_title("Linear term")
+    pl_lin.set_xlabel("c [px]")
+    pl_lin.set_ylabel("b")
 
 
 def parse_args():

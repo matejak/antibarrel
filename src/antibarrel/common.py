@@ -86,9 +86,13 @@ def show_points_more(linelist, deplist=None):
     pl_quad.grid()
     pl_quad.axhline(0, color="k")
     pl_quad.set_title("Quadratic term")
+    pl_quad.set_ylabel("a [1 / px]")
+    pl_quad.set_xlabel("c [px]")
 
     pl_lin.grid()
     pl_lin.set_title("Linear term")
+    pl_lin.set_ylabel("b")
+    pl_lin.set_xlabel("c [px]")
 
     if deplist is not None:
         for idx, (dep_quad, dep_lin) in enumerate(zip(deplist[0], deplist[1])):

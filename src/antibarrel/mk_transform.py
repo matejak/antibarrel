@@ -5,8 +5,8 @@ import argparse as ap
 import numpy as np
 import scipy.interpolate as interp
 
-import antibarrel.common
-import antibarrel.transforms
+import antibarrel.common as common
+import antibarrel.transforms as transforms
 
 
 def get_src(src, pt, tform):

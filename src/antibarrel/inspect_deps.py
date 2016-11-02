@@ -6,7 +6,7 @@ import argparse as ap
 
 import matplotlib.pyplot as plt
 
-import antibarrel.common
+import antibarrel.common as common
 
 
 def parse_args():

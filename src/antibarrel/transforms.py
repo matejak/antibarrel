@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
-import antibarrel.common
+import antibarrel.common as common
 
 
 class BaseRadialTform(object):

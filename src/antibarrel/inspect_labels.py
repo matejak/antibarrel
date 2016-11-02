@@ -7,7 +7,7 @@ import argparse as ap
 import numpy as np
 import matplotlib.pyplot as plt
 
-import antibarrel.common
+import antibarrel.common as common
 
 
 def show(im, labels):

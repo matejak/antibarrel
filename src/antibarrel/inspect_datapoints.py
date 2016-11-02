@@ -6,7 +6,7 @@ import argparse as ap
 
 import matplotlib.pyplot as plt
 
-import antibarrel.common
+import antibarrel.common as common
 
 
 def parse_args():
@@ -22,6 +22,8 @@ def plot_points(ys, pts):
         pl.plot(ptcoll[:, 1], ptcoll[:, 0], "o", color="b")
     for ycoord in ys:
         pl.axhline(ycoord)
+    pl.set_xlabel("x [px]")
+    pl.set_ylabel("y [px]")
     plt.grid()
 
 
