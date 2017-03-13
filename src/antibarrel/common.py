@@ -41,13 +41,13 @@ def pol2cart(rho, phi, center=(0, 0), norm=1):
 def point(stri):
     import argparse as ap
     try:
-        ret = _center2center(stri)
+        ret = _point_str2point(stri)
     except Exception as exc:
         raise ap.ArgumentTypeError(str(exc))
     return ret
 
 
-def _center2center(stri):
+def _point_str2point(stri):
     ret = [round(float(x)) for x in stri.split(",")]
     ret = np.array(ret, int)
     return ret
@@ -65,7 +65,7 @@ def show_points_more(linelist, deplist=None):
     _, pl_quad = plt.subplots()
     _, pl_lin = plt.subplots()
 
-    def idx2alpha(idx):
+    def idx2opacity(idx):
         ret = 1 - 0.8 * (idx / len(lines))
         return ret
 
@@ -74,7 +74,7 @@ def show_points_more(linelist, deplist=None):
     for idx, lines in enumerate(linelist):
         color = COLORS[idx]
         for idx, line in enumerate(lines):
-            alpha = idx2alpha(idx)
+            alpha = idx2opacity(idx)
             pl_quad.plot(line[-1], line[-3], "o" + color, alpha=alpha)
             # pl.plot(dsts, lins, "o")
 

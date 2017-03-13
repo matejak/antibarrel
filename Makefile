@@ -4,8 +4,8 @@ else
 	_IMDIR = $(IMDIR)
 endif
 
-INDICES ?= 01 00
-STEM ?= s-%.tiff
+INDICES ?= 00 01
+STEM ?= distorted-%.png
 
 VAL_THRESH ?= 0.5
 
